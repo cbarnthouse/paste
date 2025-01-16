@@ -1,0 +1,24 @@
+from zeep import Client
+from zeep.transports import Transport
+from requests import Session
+from requests.auth import HTTPBasicAuth
+
+# Step 1: Define Ribbon EMS WSDL URL
+WSDL_URL = "http://your-ribbon-ems-url/service?wsdl"
+
+# Step 2: Setup Authentication (if needed)
+session = Session()
+session.auth = HTTPBasicAuth('your_username', 'your_password')
+
+# Step 3: Initialize the SOAP Client with Authentication
+client = Client(WSDL_URL, transport=Transport(session=session))
+
+# Step 4: List Available Operations (optional, helps debugging)
+print(client.service)
+
+# Step 5: Call a SOAP Method (Example: Get Network Elements)
+try:
+    response = client.service.GetNetworkElements()
+    print("Response:", response)
+except Exception as e:
+    print("Error:", e)
