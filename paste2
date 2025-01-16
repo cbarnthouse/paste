@@ -1,0 +1,34 @@
+from zeep import Client
+from zeep.transports import Transport
+from requests.auth import HTTPBasicAuth
+import requests
+
+# EMS Configuration
+EMS_URL = "https://your-ems-url:8443/EMSAPI/services/YourService?wsdl"  # Replace with your EMS WSDL URL
+USERNAME = "your_username"
+PASSWORD = "your_password"
+
+# SOAP Request XML Template (Modify as needed)
+SOAP_ACTION = "configureSBC"
+SOAP_BODY = {
+    "sbcName": "SBC-1",
+    "parameter1": "value1",
+    "parameter2": "value2",
+    # Add other necessary SBC parameters here
+}
+
+# Configure Transport with Basic Authentication
+session = requests.Session()
+session.auth = HTTPBasicAuth(USERNAME, PASSWORD)
+transport = Transport(session=session)
+
+# Create SOAP Client
+client = Client(wsdl=EMS_URL, transport=transport)
+
+try:
+    # Invoke the SOAP API method
+    response = client.service.configureSBC(**SOAP_BODY)
+    print("Response:", response)
+
+except Exception as e:
+    print("Error:", e)
