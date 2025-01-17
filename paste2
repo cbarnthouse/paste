@@ -1,34 +1,37 @@
 from zeep import Client
+from zeep.plugins import HistoryPlugin
 from zeep.transports import Transport
+from requests import Session
 from requests.auth import HTTPBasicAuth
-import requests
+from bs4 import BeautifulSoup
 
-# EMS Configuration
-EMS_URL = "https://your-ems-url:8443/EMSAPI/services/YourService?wsdl"  # Replace with your EMS WSDL URL
-USERNAME = "your_username"
-PASSWORD = "your_password"
+# Define EMS WSDL URL
+WSDL_URL = "https://your-ems-ip/ws/NetworkManagementService?wsdl"
 
-# SOAP Request XML Template (Modify as needed)
-SOAP_ACTION = "configureSBC"
-SOAP_BODY = {
-    "sbcName": "SBC-1",
-    "parameter1": "value1",
-    "parameter2": "value2",
-    # Add other necessary SBC parameters here
-}
+# Capture SOAP request/response history
+history = HistoryPlugin()
 
-# Configure Transport with Basic Authentication
-session = requests.Session()
-session.auth = HTTPBasicAuth(USERNAME, PASSWORD)
-transport = Transport(session=session)
+# Handle authentication and SSL issues
+session = Session()
+session.verify = False  # ⚠️ Disable SSL verification for testing (use cert in production)
+session.auth = HTTPBasicAuth("your_username", "your_password")
 
-# Create SOAP Client
-client = Client(wsdl=EMS_URL, transport=transport)
+# Create SOAP client with plugins
+client = Client(WSDL_URL, transport=Transport(session=session), plugins=[history])
 
+# Call a SOAP method (replace with actual method from WSDL)
 try:
-    # Invoke the SOAP API method
-    response = client.service.configureSBC(**SOAP_BODY)
-    print("Response:", response)
-
+    response = client.service.GetNetworkElements()  # Adjust for your EMS API
+    print("Original Response:", response)
 except Exception as e:
-    print("Error:", e)
+    print("SOAP Request Failed:", e)
+
+# Process the response using BeautifulSoup
+if history.last_received:
+    raw_response = history.last_received.decode("utf-8")  # Convert bytes to string
+    soup = BeautifulSoup(raw_response, "xml")  # More forgiving XML parser
+
+    # Pretty-print the cleaned XML
+    cleaned_xml = soup.prettify()
+    print("\nFixed XML Response:")
+    print(cleaned_xml)
